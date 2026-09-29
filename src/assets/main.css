@@ -1,0 +1,122 @@
+/* ===========================================================
+   COMPTOIR — tokens globaux
+   ===========================================================
+   Toutes les couleurs de l'app passent par ces variables : la
+   plupart des composants (SectionTable, AlertCard, InfoStatCard,
+   ValeurStockCard, UserBadge, PastilleStatut, ProductsTable...)
+   les consomment déjà sans connaître leur valeur, donc changer
+   ce fichier recolore l'app entière sans toucher aux composants.
+   =========================================================== */
+:root {
+  /* ---------- Palette de marque ---------- */
+  --color-navy: #16212B;
+  --color-cream: #EDE7D6;
+  --color-cream-light: #FBF8F1;
+  --color-tan: #A9825C;
+  --color-green: #2F4A3C;
+  --color-green-soft: #DCE6D9;
+  --color-terracotta: #B96B4A;
+  --color-burgundy: #8C3527;
+  --color-ink: #2B2620;
+  --color-ink-muted: #7A7259;
+  --color-border: #DAD2B8;
+
+  /* ---------- Rôles sémantiques (consommés par les composants) ---------- */
+  --color-bg-app: var(--color-cream);
+  --color-bg-sidebar: var(--color-navy);
+  --color-bg-card: var(--color-cream-light);
+  --color-bg-panel-muted: #E4DCC7;
+  --color-bg-panel-strong: #C9BFA4;
+  --color-bg-section-banner: #E4DCC7;
+  --color-bg-table-header: #F1EAD6;
+
+  --color-text-main: var(--color-ink);
+  --color-text-on-dark: var(--color-cream);
+  --color-text-muted: var(--color-ink-muted);
+
+  --color-status-warning-bg: var(--color-terracotta);
+  --color-status-critical-bg: var(--color-burgundy);
+
+  /* ---------- Pastilles de statut (StatusPill) ---------- */
+  /* NOTE : ces variables n'étaient définies nulle part avant, donc
+     "bas du seuil" et "rupture" s'affichaient toutes deux sans
+     fond/texte (indiscernables). On leur donne ici des couleurs
+     nettement distinctes, alignées sur la palette déjà utilisée
+     pour ces statuts ailleurs (PastilleStatut.vue). */
+  --color-pill-ok-bg: var(--color-green-soft);
+  --color-pill-ok-text: var(--color-green);
+  --color-pill-warning-bg: var(--color-terracotta);
+  --color-pill-warning-text: var(--color-cream-light);
+  --color-pill-critical-bg: var(--color-burgundy);
+  --color-pill-critical-text: var(--color-cream-light);
+
+  /* ---------- Sidebar ---------- */
+  --sidebar-width: 210px;
+  --sidebar-logo-size: 46px;
+  --sidebar-logo-radius: 50%;
+
+  /* ---------- Typographie ---------- */
+  --font-display: 'Fraunces', serif;
+  --font-body: 'IBM Plex Sans', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+  --font-logo: var(--font-display);
+  --font-interface: var(--font-body);
+
+  /* ---------- Espacements ---------- */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+
+  /* ---------- Rayons ---------- */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+}
+
+/* ---------- Reset minimal ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+html, body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  background: #EDE7D6;
+}
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  color: var(--color-text-main);
+  -webkit-font-smoothing: antialiased;
+}
+input, button { font: inherit; }
+a { color: inherit; }
+
+/* ---------- Motif logo partagé (déjà utilisé sur Accueil/Connexion/Inscription) ---------- */
+.bg-comptoir-pattern {
+  background-color: var(--color-cream);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><text x='10' y='55' font-family='Fraunces,serif' font-style='italic' font-weight='600' font-size='44' fill='%23A9825C' opacity='0.07'>C</text><text x='70' y='115' font-family='Fraunces,serif' font-style='italic' font-weight='600' font-size='44' fill='%23A9825C' opacity='0.07'>C</text></svg>");
+}
+/* ---------- Bordure neutre autour de toutes les pages ---------- */
+body {
+  border: 1px solid var(--color-border);
+  border-radius: 11px;
+}
+/* ---------- Impression du reçu de vente ---------- */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .recu-print,
+  .recu-print * {
+    visibility: visible;
+  }
+  .recu-print {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+}

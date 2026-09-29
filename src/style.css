@@ -1,0 +1,364 @@
+/* ===========================================================
+   COMPTOIR — tokens
+   =========================================================== */
+:root {
+  --ink: #15130f;
+  --ink-soft: #211d17;
+  --ink-line: #3a3427;
+
+  --paper: #f3ecdd;
+  --paper-line: #d8cdb4;
+  --paper-shadow: rgba(21, 19, 15, 0.18);
+
+  --brass: #c9a227;
+  --brass-dim: #8f7420;
+  --burgundy: #7a2e2e;
+
+  --text-on-ink: #ece6d6;
+  --text-on-ink-muted: #a89f8a;
+  --text-on-paper: #26221a;
+  --text-on-paper-muted: #6f6656;
+
+  --font-display: "Fraunces", serif;
+  --font-body: "Work Sans", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+
+  --radius: 3px;
+}
+
+/* ===========================================================
+   Reset
+   =========================================================== */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  color: var(--text-on-paper);
+  -webkit-font-smoothing: antialiased;
+}
+input, button { font: inherit; }
+a { color: inherit; }
+
+/* Edge affiche son propre bouton "œil" natif sur les champs
+   type="password", qui se superpose à nos icônes œil personnalisées
+   (mot de passe / confirmation) et ne suit pas leur état — d'où
+   l'impression que l'œil "ne fonctionne pas" quel que soit le code
+   Vue. On le désactive partout pour ne garder que nos icônes. */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ===========================================================
+   Layout
+   =========================================================== */
+.screen {
+  min-height: 100vh;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+/* ---------- Left panel: the ledger wall ---------- */
+.ledger {
+  position: relative;
+  flex: 1 1 58%;
+  min-width: 320px;
+  background: var(--ink);
+  color: var(--text-on-ink);
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.ledger__grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.ledger__inner {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 4rem 2.5rem;
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+}
+
+.brand__mark {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 600;
+  font-size: clamp(2.4rem, 4vw, 3.2rem);
+  letter-spacing: 0.01em;
+  color: var(--text-on-ink);
+}
+
+.brand__swash {
+  width: 150px;
+  height: 14px;
+  overflow: visible;
+}
+.brand__swash path {
+  fill: none;
+  stroke: var(--brass);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+.tagline {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-on-ink-muted);
+  margin: 0 0 3rem;
+}
+.tagline__dash { color: var(--brass); }
+
+/* ---------- Tally strip: the signature element ---------- */
+.tally {
+  border-top: 1px solid var(--ink-line);
+}
+
+.tally__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--ink-line);
+}
+
+.tally__label {
+  font-size: 0.92rem;
+  color: var(--text-on-ink-muted);
+}
+
+.tally__value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 1.4rem;
+  font-weight: 500;
+  color: var(--brass);
+  min-width: 3ch;
+  text-align: right;
+}
+
+.tally__row--warn .tally__value { color: #c96a4a; }
+
+.ledger__foot {
+  margin: 2.25rem 0 0;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 0.95rem;
+  color: var(--text-on-ink-muted);
+}
+
+/* ---------- Right panel: the counter (login) ---------- */
+.counter {
+  flex: 1 1 42%;
+  min-width: 320px;
+  background: var(--paper);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.5rem;
+}
+
+.card {
+  width: 100%;
+  max-width: 360px;
+  background: var(--paper);
+  border: 1px solid var(--paper-line);
+  border-radius: var(--radius);
+  padding: 2.25rem 2rem;
+  box-shadow: 0 18px 40px -22px var(--paper-shadow);
+  position: relative;
+}
+
+.card__ref {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  color: var(--text-on-paper-muted);
+  margin-bottom: 1.25rem;
+}
+
+.card__title {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 600;
+  font-size: 2rem;
+  margin: 0 0 0.4rem;
+  color: var(--text-on-paper);
+}
+
+.card__sub {
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--text-on-paper-muted);
+  margin: 0 0 1.75rem;
+}
+
+/* ---------- Form ---------- */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.field__label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-on-paper-muted);
+}
+
+.field__input {
+  border: none;
+  border-bottom: 1.5px solid var(--paper-line);
+  background: transparent;
+  padding: 0.55rem 0.1rem;
+  font-size: 1rem;
+  color: var(--text-on-paper);
+  transition: border-color 0.2s ease;
+}
+.field__input::placeholder { color: #a79c82; font-style: italic; }
+.field__input:hover { border-color: var(--brass-dim); }
+.field__input:focus {
+  outline: none;
+  border-color: var(--brass);
+}
+.field__input:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: 3px;
+  border-color: var(--brass);
+}
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius);
+  font-weight: 600;
+  font-size: 0.92rem;
+  letter-spacing: 0.02em;
+  padding: 0.75rem 1.25rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.15s ease;
+}
+
+.btn--primary {
+  border: none;
+  background: var(--ink);
+  color: var(--text-on-ink);
+  margin-top: 0.4rem;
+}
+.btn--primary:hover { background: var(--ink-soft); }
+.btn--primary:active { transform: translateY(1px); }
+.btn--primary:focus-visible { outline: 2px solid var(--brass); outline-offset: 3px; }
+
+.btn--ghost {
+  border: 1.5px solid var(--ink);
+  background: transparent;
+  color: var(--text-on-paper);
+}
+.btn--ghost:hover { background: var(--ink); color: var(--text-on-ink); }
+.btn--ghost:focus-visible { outline: 2px solid var(--brass); outline-offset: 3px; }
+
+/* ---------- Divider + signup ---------- */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.5rem 0 1.25rem;
+  color: var(--text-on-paper-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--paper-line);
+}
+
+.signup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  text-align: center;
+}
+.signup__label {
+  font-size: 0.88rem;
+  color: var(--text-on-paper-muted);
+}
+.signup .btn--ghost { width: 100%; }
+
+/* ---------- Help button ---------- */
+.help-btn {
+  position: fixed;
+  top: 1.25rem;
+  right: 1.25rem;
+  z-index: 10;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  border: none;
+  background: var(--ink);
+  color: var(--text-on-ink);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: transform 0.15s ease, background-color 0.2s ease;
+}
+.help-btn:hover { background: var(--brass-dim); transform: scale(1.06); }
+.help-btn:focus-visible { outline: 2px solid var(--brass); outline-offset: 3px; }
+
+/* ===========================================================
+   Responsive
+   =========================================================== */
+@media (max-width: 860px) {
+  .screen { flex-direction: column; }
+  .ledger, .counter { flex: 1 1 auto; width: 100%; }
+  .ledger__inner { padding: 3.5rem 1.75rem 2.5rem; }
+  .counter { padding: 2.5rem 1.5rem 3.5rem; }
+}
+
+@media (max-width: 420px) {
+  .brand__mark { font-size: 2rem; }
+  .card { padding: 1.75rem 1.25rem; }
+}
