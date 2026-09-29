@@ -1,6 +1,5 @@
 <template>
   <div class="connexion-vendeur-template">
-    <TopBanner @help-click="$emit('help-click')" />
     <div class="connexion-vendeur-template__header">
       <p class="connexion-vendeur-template__entreprise">{{ nomEntreprise }}</p>
       <button class="connexion-vendeur-template__link" @click="$emit('inscription-vendeur-click')">
@@ -14,8 +13,6 @@
 </template>
 
 <script setup>
-import TopBanner from '../organisms/TopBanner.vue';
-
 defineProps({
   nomEntreprise: {
     type: String,
