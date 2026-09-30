@@ -6,6 +6,10 @@
   suppression. AUCUNE modification n'est possible ici à part la
   suppression (conformément à la consigne : l'admin voit tout mais
   ne modifie rien, sauf supprimer des comptes).
+
+  BRANCHÉ SUR LE VRAI BACKEND (routes /api/admin/...) : les listes
+  sont chargées au montage (async), et la suppression se fait par
+  identifiant (id), pas par nom — l'ancien code local a été retiré.
 -->
 <template>
   <GerantPageTemplate role="admin">
@@ -13,6 +17,8 @@
       <h1 class="admin-comptes-page__title">Comptes</h1>
       <p class="admin-comptes-page__subtitle">Gérants et vendeurs inscrits sur la plateforme</p>
     </header>
+
+    <p v-if="messageErreur" class="admin-comptes-page__erreur">{{ messageErreur }}</p>
 
     <section class="admin-comptes-page__section">
       <h2 class="admin-comptes-page__section-title">Gérants ({{ entreprises.length }})</h2>
@@ -22,12 +28,12 @@
             <tr><th>Entreprise</th><th>Secteur</th><th>Gérant</th><th class="admin-comptes-page__center">Action</th></tr>
           </thead>
           <tbody>
-            <tr v-for="e in entreprises" :key="e.nomEntreprise">
+            <tr v-for="e in entreprises" :key="e.id">
               <td class="admin-comptes-page__nom">{{ e.nomEntreprise }}</td>
               <td>{{ e.secteurActivite }}</td>
               <td>{{ e.nomGerant }}</td>
               <td class="admin-comptes-page__center">
-                <button type="button" class="admin-comptes-page__supprimer" @click="supprimerCompteEntreprise(e.nomEntreprise)">
+                <button type="button" class="admin-comptes-page__supprimer" @click="supprimerCompteEntreprise(e)">
                   Supprimer
                 </button>
               </td>
@@ -46,12 +52,12 @@
             <tr><th>Nom &amp; prénoms</th><th>Entreprise</th><th>Email</th><th class="admin-comptes-page__center">Action</th></tr>
           </thead>
           <tbody>
-            <tr v-for="v in vendeurs" :key="v.entreprise + v.nomPrenoms">
+            <tr v-for="v in vendeurs" :key="v.id">
               <td class="admin-comptes-page__nom">{{ v.nomPrenoms }}</td>
               <td>{{ v.entreprise }}</td>
               <td>{{ v.email }}</td>
               <td class="admin-comptes-page__center">
-                <button type="button" class="admin-comptes-page__supprimer" @click="supprimerCompteVendeur(v.entreprise, v.nomPrenoms)">
+                <button type="button" class="admin-comptes-page__supprimer" @click="supprimerCompteVendeur(v)">
                   Supprimer
                 </button>
               </td>
@@ -65,25 +71,46 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import GerantPageTemplate from '../components/templates/GerantPageTemplate.vue';
 import { listerEntreprises, supprimerEntreprise } from '../store/entreprises';
-import { listerVendeurs, supprimerVendeur } from '../store/vendeurs';
+import { listerTousLesVendeurs, supprimerVendeurAdmin } from '../store/vendeurs';
 
-const entreprises = ref(listerEntreprises());
-const vendeurs = ref(listerVendeurs());
+const entreprises = ref([]);
+const vendeurs = ref([]);
+const messageErreur = ref('');
 
-function supprimerCompteEntreprise(nomEntreprise) {
-  if (!window.confirm(`Supprimer définitivement l'entreprise "${nomEntreprise}" ?`)) return;
-  supprimerEntreprise(nomEntreprise);
-  entreprises.value = listerEntreprises();
+async function chargerTout() {
+  messageErreur.value = '';
+  try {
+    entreprises.value = await listerEntreprises();
+    vendeurs.value = await listerTousLesVendeurs();
+  } catch (erreur) {
+    messageErreur.value = erreur.message;
+  }
 }
 
-function supprimerCompteVendeur(entreprise, nomPrenoms) {
-  if (!window.confirm(`Supprimer définitivement le compte vendeur "${nomPrenoms}" ?`)) return;
-  supprimerVendeur(entreprise, nomPrenoms);
-  vendeurs.value = listerVendeurs();
+async function supprimerCompteEntreprise(entreprise) {
+  if (!window.confirm(`Supprimer définitivement l'entreprise "${entreprise.nomEntreprise}" ?`)) return;
+  try {
+    await supprimerEntreprise(entreprise.id);
+    await chargerTout();
+  } catch (erreur) {
+    messageErreur.value = erreur.message;
+  }
 }
+
+async function supprimerCompteVendeur(vendeur) {
+  if (!window.confirm(`Supprimer définitivement le compte vendeur "${vendeur.nomPrenoms}" ?`)) return;
+  try {
+    await supprimerVendeurAdmin(vendeur.id);
+    await chargerTout();
+  } catch (erreur) {
+    messageErreur.value = erreur.message;
+  }
+}
+
+onMounted(chargerTout);
 </script>
 
 <style scoped>
@@ -104,6 +131,13 @@ function supprimerCompteVendeur(entreprise, nomPrenoms) {
   font-size: 12.5px;
   color: var(--color-ink-muted);
   margin: 5px 0 var(--space-lg);
+}
+
+.admin-comptes-page__erreur {
+  margin: 0 var(--space-xl) var(--space-md);
+  font-size: 12.5px;
+  color: #b3251d;
+  font-style: italic;
 }
 
 .admin-comptes-page__section {

@@ -6,6 +6,7 @@
  * l'historique des statistiques (années disponibles = de
  * l'inscription à aujourd'hui).
  */
+import { get, del } from '../services/api';
 
 const STORAGE_KEY = 'comptoir_entreprises';
 
@@ -62,4 +63,17 @@ export function obtenirAnneeCreation(nomEntreprise) {
   const entreprise = trouverEntreprise(nomEntreprise);
   if (!entreprise || !entreprise.createdAt) return new Date().getFullYear();
   return new Date(entreprise.createdAt).getFullYear();
+}
+
+// --- Fonctions ADMIN (plateforme entière, vrai backend) -----------
+// Utilisées uniquement par la page /admin/comptes. Contrairement aux
+// fonctions ci-dessus (encore en local pour l'instant), celles-ci
+// passent par le vrai serveur : la liste et la suppression touchent
+// TOUTES les entreprises inscrites, pas seulement une en local.
+export async function listerEntreprises() {
+  return get('/admin/entreprises');
+}
+
+export async function supprimerEntreprise(id) {
+  return del(`/admin/entreprises/${encodeURIComponent(id)}`);
 }

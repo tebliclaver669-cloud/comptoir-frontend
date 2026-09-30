@@ -58,3 +58,16 @@ export async function connecterVendeur(nomEntreprise, nom, motDePasse) {
 export async function enregistrerDeconnexionVendeur() {
   return post('/vendeurs/deconnexion', {});
 }
+
+// --- Admin uniquement (plateforme entière, pas une seule entreprise) ---
+// Utilisées uniquement par la page /admin/comptes. On garde des noms
+// différents de listerVendeursParEntreprise/supprimerVendeur
+// ci-dessus (qui restent réservés au gérant, sur SA seule
+// entreprise) pour ne rien casser côté paramètres-vendeurs.
+export async function listerTousLesVendeurs() {
+  return get('/admin/vendeurs');
+}
+
+export async function supprimerVendeurAdmin(id) {
+  return del(`/admin/vendeurs/${encodeURIComponent(id)}`);
+}
