@@ -13,6 +13,11 @@
   de bord gérant. Une fois plusieurs entreprises réelles enregistrées
   avec leurs propres produits, cette page devra agréger CHAQUE
   entreprise séparément (somme ou vue par entreprise à sélectionner).
+
+  BRANCHÉ SUR LE VRAI BACKEND : listerEntreprises()/listerTousLes
+  Vendeurs() viennent maintenant du serveur (routes /api/admin/...)
+  et sont asynchrones -> chargées au montage, pas en synchrone comme
+  avant.
 -->
 <template>
   <GerantPageTemplate role="admin">
@@ -20,6 +25,8 @@
       <h1 class="admin-vue-ensemble__title">Vue d'ensemble</h1>
       <p class="admin-vue-ensemble__subtitle">Lecture seule — aucune modification possible depuis cette vue</p>
     </header>
+
+    <p v-if="messageErreur" class="admin-vue-ensemble__erreur">{{ messageErreur }}</p>
 
     <div class="admin-vue-ensemble__comptes">
       <div class="admin-vue-ensemble__compte-card">
@@ -43,17 +50,28 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import GerantPageTemplate from '../components/templates/GerantPageTemplate.vue';
 import FinanceKpiRow from '../components/organisms/FinanceKpiRow.vue';
 import VentesDepensesChart from '../components/organisms/VentesDepensesChart.vue';
 import TauxEcoulementBar from '../components/organisms/TauxEcoulementBar.vue';
 import ProduitsTableauFusionne from '../components/organisms/ProduitsTableauFusionne.vue';
 import { listerEntreprises } from '../store/entreprises';
-import { listerVendeurs } from '../store/vendeurs';
+import { listerTousLesVendeurs } from '../store/vendeurs';
 
-const nbEntreprises = ref(listerEntreprises().length);
-const nbVendeurs = ref(listerVendeurs().length);
+const nbEntreprises = ref(0);
+const nbVendeurs = ref(0);
+const messageErreur = ref('');
+
+onMounted(async () => {
+  try {
+    const [entreprises, vendeurs] = await Promise.all([listerEntreprises(), listerTousLesVendeurs()]);
+    nbEntreprises.value = entreprises.length;
+    nbVendeurs.value = vendeurs.length;
+  } catch (erreur) {
+    messageErreur.value = erreur.message;
+  }
+});
 
 const products = [
   { nom: 'Riz local 22kg', categorie: 'Alimentation', stockInitial: 60, prixAchatUnitaire: 11000, prixVenteUnitaire: 13500, qteVendue: 22, seuilAlerte: 40 },
@@ -117,6 +135,13 @@ const kpisFinanciers = computed(() => {
   font-size: 12.5px;
   color: var(--color-ink-muted);
   margin: 5px 0 var(--space-lg);
+}
+
+.admin-vue-ensemble__erreur {
+  margin: 0 var(--space-xl) var(--space-md);
+  font-size: 12.5px;
+  color: #b3251d;
+  font-style: italic;
 }
 
 .admin-vue-ensemble__comptes {
