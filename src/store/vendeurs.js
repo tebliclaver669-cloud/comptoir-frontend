@@ -24,7 +24,8 @@ export async function creerVendeur(nomEntreprise, { nomPrenoms, email, telephone
 // Met à jour les infos d'un vendeur, et éventuellement son mot de
 // passe (uniquement si le vendeur ne l'a pas déjà personnalisé lui-
 // même — vérifié côté serveur). motDePasseGerant est le mot de passe
-// DU GÉRANT, vérifié côté serveur avant toute modification.
+// DU GÉRANT, vérifié côté serveur avant toute modification. Réservé
+// au gérant (voir mettreAJourMonProfil ci-dessous pour le vendeur).
 export async function mettreAJourVendeur(id, { nomPrenoms, email, telephone, nouveauMotDePasse, motDePasseGerant }) {
   return put(`/vendeurs/${encodeURIComponent(id)}`, {
     nomPrenoms,
@@ -33,6 +34,14 @@ export async function mettreAJourVendeur(id, { nomPrenoms, email, telephone, nou
     nouveauMotDePasse,
     motDePasseGerant,
   });
+}
+
+// Le VENDEUR CONNECTÉ modifie SON PROPRE profil (nom, email,
+// téléphone) et éventuellement son propre mot de passe — vérifié par
+// SON PROPRE mot de passe actuel (motDePasseActuel), jamais celui du
+// gérant. Utilisée par OptionsVendeurPage.vue.
+export async function mettreAJourMonProfil({ nomPrenoms, email, telephone, motDePasseActuel, nouveauMotDePasse }) {
+  return put('/vendeurs/moi', { nomPrenoms, email, telephone, motDePasseActuel, nouveauMotDePasse });
 }
 
 export async function supprimerVendeur(id) {

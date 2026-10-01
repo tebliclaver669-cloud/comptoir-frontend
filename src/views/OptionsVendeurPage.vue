@@ -9,6 +9,10 @@
 
   Contrairement aux pages Paramètres du gérant, il n'y a qu'un seul
   profil concerné (le sien) : pas de sélection de vendeur.
+
+  BRANCHÉ SUR LE VRAI BACKEND : la vérification du mot de passe se
+  fait maintenant sur le serveur (route PUT /api/vendeurs/moi), plus
+  côté client — l'ancienne fonction vendeurValide() a été retirée.
 -->
 <template>
   <GerantPageTemplate role="vendeur">
@@ -63,23 +67,26 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import GerantPageTemplate from '../components/templates/GerantPageTemplate.vue';
 import ParametresVendeurForm from '../components/organisms/ParametresVendeurForm.vue';
-import { listerVendeursParEntreprise, mettreAJourVendeur, vendeurValide } from '../store/vendeurs';
+import { listerVendeursParEntreprise, mettreAJourMonProfil } from '../store/vendeurs';
 import { useSession, ouvrirSession } from '../store/session';
 
 const session = useSession();
 
-function chargerVendeurConnecte() {
-  return (
-    listerVendeursParEntreprise(session.nomEntreprise.value).find(
-      (v) => v.nomPrenoms === session.nomUtilisateur.value
-    ) || null
-  );
+const vendeurCourant = ref(null);
+
+async function chargerVendeurConnecte() {
+  try {
+    const vendeurs = await listerVendeursParEntreprise(session.nomEntreprise.value);
+    vendeurCourant.value = vendeurs.find((v) => v.nomPrenoms === session.nomUtilisateur.value) || null;
+  } catch (erreur) {
+    messageErreurProfil.value = erreur.message;
+  }
 }
 
-const vendeurCourant = ref(chargerVendeurConnecte());
+onMounted(chargerVendeurConnecte);
 
 const valeursVendeur = computed(() =>
   vendeurCourant.value
@@ -96,8 +103,9 @@ const valeursVendeur = computed(() =>
 const messageErreurProfil = ref('');
 const messageSuccesProfil = ref('');
 
-function gererEnregistrementProfil({ champsModifies, motDePasse }) {
+async function gererEnregistrementProfil({ champsModifies, motDePasse }) {
   messageSuccesProfil.value = '';
+  messageErreurProfil.value = '';
 
   if (Object.keys(champsModifies).length === 0) {
     messageErreurProfil.value = 'Aucune modification à enregistrer.';
@@ -109,26 +117,23 @@ function gererEnregistrementProfil({ champsModifies, motDePasse }) {
     return;
   }
 
-  if (!vendeurValide(session.nomEntreprise.value, session.nomUtilisateur.value, motDePasse)) {
-    messageErreurProfil.value = 'Mot de passe incorrect.';
-    return;
-  }
-
   if (champsModifies.email && !champsModifies.email.includes('@')) {
     messageErreurProfil.value = "L'adresse email doit contenir un @.";
     return;
   }
 
-  const nomAvant = session.nomUtilisateur.value;
-  const vendeurMisAJour = mettreAJourVendeur(session.nomEntreprise.value, nomAvant, champsModifies);
+  try {
+    const vendeurMisAJour = await mettreAJourMonProfil({
+      ...champsModifies,
+      motDePasseActuel: motDePasse,
+    });
 
-  if (vendeurMisAJour) {
     ouvrirSession('vendeur', session.nomEntreprise.value, vendeurMisAJour.nomPrenoms);
     vendeurCourant.value = vendeurMisAJour;
+    messageSuccesProfil.value = 'Modifications enregistrées.';
+  } catch (erreur) {
+    messageErreurProfil.value = erreur.message;
   }
-
-  messageErreurProfil.value = '';
-  messageSuccesProfil.value = 'Modifications enregistrées.';
 }
 
 // --- Sécurité (changement de mot de passe) ---
@@ -139,16 +144,12 @@ const confirmation = ref('');
 const messageErreurSecurite = ref('');
 const messageSuccesSecurite = ref('');
 
-function gererChangementMotDePasse() {
+async function gererChangementMotDePasse() {
   messageSuccesSecurite.value = '';
+  messageErreurSecurite.value = '';
 
   if (!motDePasseActuel.value.trim() || !nouveauMotDePasse.value.trim() || !confirmation.value.trim()) {
     messageErreurSecurite.value = 'Merci de remplir tous les champs.';
-    return;
-  }
-
-  if (!vendeurValide(session.nomEntreprise.value, session.nomUtilisateur.value, motDePasseActuel.value)) {
-    messageErreurSecurite.value = 'Le mot de passe actuel est incorrect.';
     return;
   }
 
@@ -157,19 +158,23 @@ function gererChangementMotDePasse() {
     return;
   }
 
-  // motDePassePersonnalise passe à true : à partir de maintenant, le
-  // gérant ne pourra plus réinitialiser ce mot de passe ni s'en
-  // servir pour "Connecter un vendeur" — seul le vendeur y a accès.
-  mettreAJourVendeur(session.nomEntreprise.value, session.nomUtilisateur.value, {
-    motDePasse: nouveauMotDePasse.value,
-    motDePassePersonnalise: true,
-  });
+  try {
+    // motDePassePersonnalise passe à true côté serveur : à partir de
+    // maintenant, le gérant ne pourra plus réinitialiser ce mot de
+    // passe ni s'en servir pour "Connecter un vendeur" — seul le
+    // vendeur y a accès.
+    await mettreAJourMonProfil({
+      motDePasseActuel: motDePasseActuel.value,
+      nouveauMotDePasse: nouveauMotDePasse.value,
+    });
 
-  messageErreurSecurite.value = '';
-  messageSuccesSecurite.value = 'Mot de passe mis à jour.';
-  motDePasseActuel.value = '';
-  nouveauMotDePasse.value = '';
-  confirmation.value = '';
+    messageSuccesSecurite.value = 'Mot de passe mis à jour.';
+    motDePasseActuel.value = '';
+    nouveauMotDePasse.value = '';
+    confirmation.value = '';
+  } catch (erreur) {
+    messageErreurSecurite.value = erreur.message;
+  }
 }
 </script>
 
