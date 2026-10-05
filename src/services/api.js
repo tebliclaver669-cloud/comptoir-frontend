@@ -1,12 +1,13 @@
-/**
- * api.js
- * ----------------------------------------------------------------
- * Point central pour tous les appels au backend. Gère l'adresse du
- * serveur et l'ajout automatique du token dans les requêtes qui en
- * ont besoin, pour ne pas avoir à le refaire à chaque appel.
- */
-
-const BASE_URL = 'http://localhost:4000/api';
+// Adresse du backend, par ordre de priorité :
+//   1. VITE_API_URL si elle est définie (variable d'environnement
+//      Vercel, ou fichier .env en local) ;
+//   2. en développement (npm run dev) : localhost:4000 ;
+//   3. en production (site déployé sur Vercel) : le backend Render.
+// Cette adresse n'a rien de secret : elle est de toute façon visible
+// dans le code envoyé au navigateur.
+const BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.DEV ? 'http://localhost:4000/api' : 'https://comptoir-api-kvf0.onrender.com/api');
 
 export function obtenirToken() {
   return localStorage.getItem('comptoir_token');
