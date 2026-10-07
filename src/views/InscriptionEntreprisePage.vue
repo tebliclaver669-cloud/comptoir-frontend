@@ -3,12 +3,12 @@
   --------------------------------------------------------------
   Rôle : page routée sur "/inscription". Branché sur le vrai
   backend : gererInscription() appelle POST /api/entreprises, qui
-  crée l'entreprise dans PostgreSQL et envoie un code de
-  confirmation par email. Après inscription réussie, redirection
-  vers /confirmation-email (PAS vers Connexion ni le tableau de
-  bord) — le compte n'est utilisable qu'une fois le code confirmé,
-  le backend refusant toute connexion tant que emailConfirme est
-  false.
+  crée l'entreprise dans PostgreSQL.
+
+  La confirmation par e-mail est DÉSACTIVÉE : le backend marque le
+  compte comme confirmé dès sa création. Juste après l'inscription,
+  le gérant est connecté automatiquement (POST /api/auth/connexion)
+  puis envoyé directement sur son tableau de bord.
 -->
 <template>
   <BannerPageTemplate @help-click="afficherAide">
@@ -24,7 +24,9 @@ import { ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import BannerPageTemplate from '../components/templates/BannerPageTemplate.vue';
 import InscriptionEntrepriseForm from '../components/organisms/InscriptionEntrepriseForm.vue';
-import { post } from '../services/api';
+import { post, enregistrerToken } from '../services/api';
+import { ouvrirSession } from '../store/session';
+import { chargerProduits } from '../store/produits';
 
 const route = useRoute();
 const router = useRouter();
@@ -74,17 +76,29 @@ async function gererInscription() {
       nomGerant: formulaire.value.nomGerant,
       motDePasse: formulaire.value.motDePasse,
     });
-
-    router.push({
-      path: '/confirmation-email',
-      query: {
-        entreprise: formulaire.value.nomEntreprise,
-        nom: formulaire.value.nomGerant,
-        motDePasse: formulaire.value.motDePasse,
-      },
-    });
   } catch (erreur) {
     messageErreur.value = erreur.message;
+    chargement.value = false;
+    return;
+  }
+
+  // Compte créé : connexion automatique du gérant.
+  try {
+    const reponse = await post('/auth/connexion', {
+      nomEntreprise: formulaire.value.nomEntreprise,
+      nom: formulaire.value.nomGerant,
+      motDePasse: formulaire.value.motDePasse,
+    });
+
+    enregistrerToken(reponse.token);
+    ouvrirSession(reponse.role, reponse.nomEntreprise, reponse.nom);
+    await chargerProduits(reponse.nomEntreprise);
+    router.push('/tableau-de-bord');
+  } catch (erreur) {
+    // Le compte existe bien, seule la connexion automatique a échoué :
+    // on renvoie l'utilisateur à l'accueil pour se connecter à la main.
+    messageErreur.value = 'Compte créé. Connectez-vous avec votre nom et votre mot de passe.';
+    router.push('/');
   } finally {
     chargement.value = false;
   }
